@@ -26,11 +26,8 @@ static int DisplayError(NWC24Config& config, std::string_view message, s32 error
     std::cout << found->second << std::endl;
 
   s64 wiino = config.GetFriendCode();
-  // s64 wiino = 595'0972'0461'0244;
 
   std::cout << "Wii Number: " << std::format("{:04}-{:04}-{:04}-{:04}", (wiino / (u64)1e+12) % 10000, (wiino / (u64)1e+8) % 10000, (wiino / (u64)1e+4) % 10000, wiino % 10000) << std::endl << std::endl;
-  std::cout << "Please join the WiiLink Discord for support." << std::endl;
-  std::cout << "Server Link: https://discord.gg/wiilink" << std::endl << std::endl ;
   std::cout << "Press the HOME Button to exit." << std::endl;
   return error_code;
 }
@@ -80,11 +77,8 @@ static int TestRegistration(NWC24Config& config)
       break;
     }
 
-    // std::cout << std::format("KD_CheckMail() ret={} soError={}", outbuf[0], outbuf[3]) << std::endl;
-
     if (outbuf[0] == -33)
     {
-      // std::cout << std::format("Network not available, retrying... ({}) *", outbuf[3]) << std::endl;
       if (!tries--)
       {
         ret = DisplayError(config, "An error has occured during the patching process.", GetWC24Error(fd, config));
@@ -107,27 +101,9 @@ static int TestRegistration(NWC24Config& config)
 
 int Patcher()
 {
-  // This is hacky but the easiest way to go about patching.
-  // We can utilize the Request Register User ID ioctl within KD.
-  // Before doing that however, we must set the registration flag to `Generated` then reload IOS.
-  // We must also set the account URL to ours.
   NWC24Config config = NWC24Config();
-  if (config.GetEmail() == "@rc24.xyz")
-  {
-    // std::cout << "Email is already rc24.xyz, check mail now...." << std::endl;
 
-    int ret = TestRegistration(config);
-    if (ret == 1)
-    {
-      std::cout << "Your Wii is already registered for WiiLink Mail." << std::endl << std::endl;
-      std::cout << "Press the HOME Button to exit." << std::endl;
-      return 0;
-    }
-    else if (ret < 0)
-    {
-      return ret;
-    }
-  }
+  // Removed early exit check for existing @wii.heyfordy.de email to force patching logic
 
   config.SetCreationStage(NWC24CreationStage::Generated);
   config.SetAccountURL();
@@ -152,15 +128,20 @@ int Patcher()
     if (ret < 0)
       return DisplayError(config, "A fatal error has occurred in the WC24 device.", ret);
 
-    // std::cout << std::format("KD_CreateAccount() ret={} soError={}", outbuf[0], outbuf[1]) << std::endl;
-
     ret = outbuf[0];
+    
+    // Check for duplicate registration error (-110211) and treat as success
+    if (ret == -110211)
+    {
+        std::cout << "Account already exists on server. Proceeding with patch..." << std::endl;
+        ret = 0;
+    }
+
     if (ret == -33)
     {
       if (!tries--)
         break;
 
-      // std::cout << std::format("Network not available, retrying... ({})", outbuf[1]) << std::endl;
       continue;
     }
   } while (0);
@@ -171,12 +152,11 @@ int Patcher()
   // Now that we successfully added to the server, update the URLs and email.
   // We have to reload the config as KD would have flushed the new mlchkid and password.
   config = NWC24Config();
-  config.SetEmail("@rc24.xyz");
+  config.SetEmail("@wii.heyfordy.de");
   config.SetURLs();
   config.SetCreationStage(NWC24CreationStage::Registered);
   config.WriteConfig();
-  std::cout << "Patching succeeded! You can now use the WiiLink Mail Service!" << std::endl;
-  std::cout << "Thank you for installing WiiLink!" << std::endl;
+  std::cout << "Patching succeeded! You can now use the heyFordy.de Mail Service!" << std::endl;
   std::cout << std::endl << "Press the HOME Button to exit." << std::endl;
 
   return 0;

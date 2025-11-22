@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23)
-project(WiiLink-Mail-Patcher CXX)
+project(heyfordy-mail-patcher CXX)
 
 message(STATUS "Using toolchain file " ${CMAKE_TOOLCHAIN_FILE})
 
@@ -20,7 +20,7 @@ set(CMAKE_ASM_FLAGS "-x assembler-with-cpp")
 set(CMAKE_C_FLAGS "-Wall -Wextra -Wno-unused-function -O2 ${CMAKE_CXX_FLAGS} ${MACHDEP}")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused-function -O2 ${CMAKE_CXX_FLAGS} ${MACHDEP} -fdiagnostics-color")
 set(CMAKE_EXECUTABLE_SUFFIX ".elf")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/apps/Mail-Patcher")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Patcher")
 
-add_executable(wiilink-mail-patcher main.cpp patcher.cpp config.cpp config.h utils.cpp utils.h patcher.h)
-target_link_libraries(wiilink-mail-patcher wiiuse bte fat ogc m)
+add_executable(heyfordy-mail-patcher main.cpp patcher.cpp config.cpp config.h utils.cpp utils.h patcher.h)
+target_link_libraries(heyfordy-mail-patcher wiiuse bte fat ogc m)

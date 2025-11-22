@@ -1,0 +1,63 @@
+name: ✉️ Build & Commit Patcher
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitppc:latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Install Tools
+      run: |
+        apt-get update
+        apt-get install -y cmake ninja-build git
+
+    - name: Configure Git Safe Directory
+      run: |
+        git config --global --add safe.directory $GITHUB_WORKSPACE
+
+    - name: Configure & Build
+      run: |
+        mkdir -p build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE=../toolchain-powerpc.cmake -G Ninja ..
+        ninja
+
+    - name: Package Application
+      run: |
+        export PATH=$DEVKITPPC/bin:$PATH
+
+        mkdir -p apps/Fordys-Mail
+
+        powerpc-eabi-objcopy -O binary Patcher/heyfordy-mail-patcher.elf apps/Fordys-Mail/boot.dol
+        
+        cp Patcher/meta.xml apps/Fordys-Mail/meta.xml
+        cp Patcher/icon.png apps/Fordys-Mail/icon.png
+
+    - name: Commit & Push Results
+      run: |
+        git config --global user.name "Build Patcher Bot"
+        git config --global user.email "actions@github.com"
+        
+        git add apps/Fordys-Mail/
+        
+        if git diff --staged --quiet; then
+          echo "No changes to commit."
+        else
+          git commit -m "🤖 Patcher App compiled!"
+          git push
+        fi
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Fordys-Mail-App
+        path: apps/Fordys-Mail/

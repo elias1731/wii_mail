@@ -1,5 +1,5 @@
 # Mail-Patcher
-Patcher for WiiLink
+Wii MSG Board Patcher for heyFordy.de
 
 CMake support is from Dolphin Emulator's [hwtest repo](https://github.com/dolphin-emu/hwtests)
 
